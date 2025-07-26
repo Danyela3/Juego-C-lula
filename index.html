@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Quién quiere ser millonario? - La Célula</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .game-container {
+            background-color: #2d3748; /* Slightly lighter dark background */
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            color: #e2e8f0; /* Light text color */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+        .question-box {
+            background-color: #4a5568; /* Even lighter dark for question */
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .answer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        @media (min-width: 768px) {
+            .answer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .answer-button {
+            background-color: #63b3ed; /* Blue */
+            color: #1a202c; /* Dark text */
+            padding: 18px 25px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .answer-button:hover:not(.disabled) {
+            background-color: #4299e1; /* Darker blue on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+        }
+        .answer-button.correct {
+            background-color: #48bb78; /* Green */
+            color: #1a202c;
+        }
+        .answer-button.incorrect {
+            background-color: #f56565; /* Red */
+            color: #1a202c;
+        }
+        .answer-button.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .start-button, .restart-button {
+            background-color: #ecc94b; /* Yellow */
+            color: #1a202c;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            align-self: center; /* Center the button */
+        }
+        .start-button:hover, .restart-button:hover {
+            background-color: #d69e2e; /* Darker yellow */
+            transform: translateY(-2px);
+        }
+        .money-tree {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #2d3748;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .money-tree li {
+            padding: 10px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a0aec0; /* Lighter gray */
+            border-bottom: 1px solid #4a5568;
+            display: flex;
+            justify-content: space-between;
+        }
+        .money-tree li:last-child {
+            border-bottom: none;
+        }
+        .money-tree li.current {
+            color: #ecc94b; /* Yellow for current level */
+            font-weight: 700;
+            transform: scale(1.05);
+        }
+        .money-tree li.safe {
+            color: #48bb78; /* Green for safe levels */
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #2d3748;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            color: #e2e8f0;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #a0aec0;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .modal-close-button:hover {
+            color: #e2e8f0;
+        }
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-explanation {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .modal-next-button {
+            background-color: #ecc94b;
+            color: #1a202c;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+        .modal-next-button:hover {
+            background-color: #d69e2e;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-400">¿Quién quiere ser millonario?</h1>
+        <h2 class="text-2xl font-bold text-center mb-4 text-green-400">¡La Célula!</h2>
+
+        <div id="start-screen" class="flex flex-col items-center gap-6">
+            <p class="text-lg text-center">
+                ¡Bienvenido a la versión de "La Célula" de "¿Quién quiere ser millonario?"!
+                Pon a prueba tus conocimientos sobre la estructura celular, funciones de los organelos,
+                diferencias entre células procariotas y eucariotas, y procesos como la mitosis y la meiosis.
+                ¡Responde correctamente para ganar el millón!
+            </p>
+            <button id="start-button" class="start-button">Comenzar Juego</button>
+        </div>
+
+        <div id="game-screen" class="hidden flex flex-col gap-6">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-grow">
+                    <div class="question-box mb-6" id="question-text">
+                        Cargando pregunta...
+                    </div>
+                    <div class="answer-grid" id="answer-options">
+                        <!-- Answer buttons will be injected here by JavaScript -->
+                    </div>
+                </div>
+                <div class="w-full md:w-1/3">
+                    <h3 class="text-xl font-bold text-center mb-4 text-yellow-300">Niveles de Dinero</h3>
+                    <ul class="money-tree" id="money-tree">
+                        <!-- Money levels will be injected here by JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden flex flex-col items-center gap-6">
+            <h2 class="text-3xl font-bold text-center text-yellow-400" id="final-message"></h2>
+            <p class="text-xl text-center text-green-400">¡Has ganado <span id="final-score" class="font-bold"></span>!</p>
+            <button id="restart-button" class="restart-button">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <!-- Explanation Modal -->
+    <div id="explanation-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" id="modal-close-button">&times;</button>
+            <h3 class="modal-title" id="modal-title"></h3>
+            <p class="modal-explanation" id="modal-explanation"></p>
+            <button class="modal-next-button" id="modal-next-button">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        // Array de preguntas con opciones, respuesta correcta y explicaciones
+        const questions = [
+            {
+                question: "¿Cuál es la unidad básica y fundamental de todos los seres vivos?",
+                options: ["Tejido", "Órgano", "Célula", "Molécula"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Correcto! La célula es la unidad estructural y funcional más pequeña de la vida, capaz de realizar todas las funciones vitales.",
+                explanationIncorrect: "Incorrecto. Los tejidos, órganos y moléculas son importantes, pero la célula es la unidad básica de la vida."
+            },
+            {
+                question: "¿Qué organelo es conocido como la 'central energética' de la célula, donde se produce la mayor parte del ATP?",
+                options: ["Núcleo", "Ribosoma", "Mitocondria", "Retículo Endoplasmático"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Excelente! Las mitocondrias son las encargadas de la respiración celular, un proceso que genera energía en forma de ATP.",
+                explanationIncorrect: "Incorrecto. El núcleo contiene el material genético, los ribosomas sintetizan proteínas y el retículo endoplasmático participa en la síntesis y transporte de lípidos y proteínas."
+            },
+            {
+                question: "¿Cuál de las siguientes estructuras está presente en las células vegetales, pero no en las células animales?",
+                options: ["Membrana plasmática", "Citoplasma", "Pared celular", "Núcleo"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Así es! La pared celular, compuesta principalmente de celulosa, proporciona soporte y protección a la célula vegetal.",
+                explanationIncorrect: "Incorrecto. La membrana plasmática, el citoplasma y el núcleo están presentes en ambos tipos de células."
+            },
+            {
+                question: "¿Qué tipo de célula NO tiene un núcleo definido ni organelos membranosos?",
+                options: ["Célula eucariota", "Célula animal", "Célula vegetal", "Célula procariota"],
+                correctAnswerIndex: 3,
+                explanationCorrect: "¡Correcto! Las células procariotas (como las bacterias) carecen de núcleo y organelos membranosos, teniendo su material genético disperso en el citoplasma.",
+                explanationIncorrect: "Incorrecto. Las células eucariotas (animales y vegetales) sí poseen un núcleo definido y organelos membranosos."
+            },
+            {
+                question: "¿Cuál es la función principal del núcleo celular?",
+                options: ["Síntesis de proteínas", "Producción de energía", "Almacenar el material genético y controlar las actividades celulares", "Transporte de sustancias"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Perfecto! El núcleo contiene el ADN y controla todas las funciones vitales de la célula, dirigiendo la síntesis de proteínas y la división celular.",
+                explanationIncorrect: "Incorrecto. La síntesis de proteínas ocurre en los ribosomas, la producción de energía en las mitocondrias y el transporte en el retículo endoplasmático y aparato de Golgi."
+            },
+            {
+                question: "¿Qué organelo se encarga de modificar, clasificar y empaquetar proteínas y lípidos para su secreción o transporte a otros organelos?",
+                options: ["Lisosoma", "Vacuola", "Aparato de Golgi", "Cloroplasto"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Muy bien! El aparato de Golgi es crucial para la maduración y distribución de macromoléculas dentro y fuera de la célula.",
+                explanationIncorrect: "Incorrecto. Los lisosomas se encargan de la digestión celular, las vacuolas del almacenamiento y los cloroplastos de la fotosíntesis en vegetales."
+            },
+            {
+                question: "¿Qué proceso celular resulta en la formación de dos células hijas genéticamente idénticas a la célula madre?",
+                options: ["Meiosis", "Fecundación", "Mitosis", "Respiración celular"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Exacto! La mitosis es el proceso de división celular que asegura el crecimiento y la reparación de tejidos en organismos multicelulares.",
+                explanationIncorrect: "Incorrecto. La meiosis produce células con la mitad del número de cromosomas (gametos), y la fecundación es la unión de gametos. La respiración celular produce energía."
+            },
+            {
+                question: "¿Durante qué fase de la mitosis se alinean los cromosomas en el ecuador de la célula?",
+                options: ["Profase", "Metafase", "Anafase", "Telofase"],
+                correctAnswerIndex: 1,
+                explanationCorrect: "¡Correcto! En la metafase, los cromosomas se organizan en el plano ecuatorial, preparándose para la separación.",
+                explanationIncorrect: "Incorrecto. En la profase, los cromosomas se condensan; en la anafase, las cromátidas hermanas se separan; y en la telofase, se forman dos nuevos núcleos."
+            },
+            {
+                question: "¿Qué organelo es el sitio de la fotosíntesis en las células vegetales?",
+                options: ["Mitocondria", "Ribosoma", "Cloroplasto", "Núcleo"],
+                correctAnswerIndex: 2,
+                explanationCorrect: "¡Excelente! Los cloroplastos contienen clorofila y son donde la energía luminosa se convierte en energía química.",
+                explanationIncorrect: "Incorrecto. Las mitocondrias producen energía, los ribosomas sintetizan proteínas y el núcleo controla la célula."
+            },
+            {
+                question: "¿Cuál es la principal diferencia en el resultado genético entre la mitosis y la meiosis?",
+                options: ["La mitosis produce células haploides, la meiosis diploides.", "La mitosis produce células idénticas, la meiosis produce células con variabilidad genética.", "La mitosis ocurre solo en células sexuales, la meiosis en células somáticas.", "No hay diferencia genética significativa."],
+                correctAnswerIndex: 1,
+                explanationCorrect: "¡Felicidades! La mitosis produce dos células hijas genéticamente idénticas a la madre, mientras que la meiosis produce cuatro células haploides genéticamente distintas, crucial para la reproducción sexual y la variabilidad.",
+                explanationIncorrect: "Incorrecto. La mitosis produce células diploides idénticas, mientras que la meiosis produce células haploides con variabilidad genética para la reproducción sexual."
+            }
+        ];
+
+        // Niveles de dinero del juego
+        const moneyLevels = [
+            { amount: "$100", safe: false },
+            { amount: "$200", safe: false },
+            { amount: "$300", safe: false },
+            { amount: "$500", safe: false },
+            { amount: "$1,000", safe: true }, // Nivel seguro
+            { amount: "$2,000", safe: false },
+            { amount: "$4,000", safe: false },
+            { amount: "$8,000", safe: false },
+            { amount: "$16,000", safe: false },
+            { amount: "$32,000", safe: true }, // Nivel seguro
+            { amount: "$64,000", safe: false },
+            { amount: "$125,000", safe: false },
+            { amount: "$250,000", safe: false },
+            { amount: "$500,000", safe: false },
+            { amount: "$1,000,000", safe: true } // El millón
+        ];
+
+        let currentQuestionIndex = 0;
+        let gameStarted = false;
+        let shuffledQuestions = [];
+
+        // Referencias a elementos del DOM
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const questionText = document.getElementById('question-text');
+        const answerOptions = document.getElementById('answer-options');
+        const moneyTreeList = document.getElementById('money-tree');
+        const finalMessage = document.getElementById('final-message');
+        const finalScore = document.getElementById('final-score');
+
+        // Modal elements
+        const explanationModalOverlay = document.getElementById('explanation-modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalExplanation = document.getElementById('modal-explanation');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const modalNextButton = document.getElementById('modal-next-button');
+
+        // Función para barajar las preguntas (algoritmo Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Inicializa el árbol de dinero
+        function renderMoneyTree() {
+            moneyTreeList.innerHTML = '';
+            moneyLevels.forEach((level, index) => {
+                const li = document.createElement('li');
+                li.textContent = level.amount;
+                if (index === currentQuestionIndex) {
+                    li.classList.add('current');
+                }
+                if (level.safe) {
+                    li.classList.add('safe');
+                }
+                moneyTreeList.appendChild(li);
+            });
+        }
+
+        // Muestra la pregunta actual
+        function displayQuestion() {
+            if (currentQuestionIndex >= shuffledQuestions.length) {
+                endGame(true); // El jugador ganó todas las preguntas
+                return;
+            }
+
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            questionText.textContent = currentQuestion.question;
+            answerOptions.innerHTML = ''; // Limpiar opciones anteriores
+
+            // Letras para las opciones
+            const optionLetters = ['A', 'B', 'C', 'D'];
+
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('answer-button');
+                button.innerHTML = <span class="font-bold">${optionLetters[index]}:</span> ${option};
+                button.onclick = () => checkAnswer(index);
+                answerOptions.appendChild(button);
+            });
+
+            renderMoneyTree(); // Actualizar el árbol de dinero
+        }
+
+        // Verifica la respuesta seleccionada
+        function checkAnswer(selectedIndex) {
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            const isCorrect = (selectedIndex === currentQuestion.correctAnswerIndex);
+
+            // Deshabilitar todos los botones de respuesta para evitar múltiples clics
+            Array.from(answerOptions.children).forEach(button => {
+                button.classList.add('disabled');
+                button.onclick = null; // Eliminar el evento click
+            });
+
+            // Resaltar la respuesta seleccionada y la correcta
+            Array.from(answerOptions.children).forEach((button, index) => {
+                if (index === selectedIndex) {
+                    button.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+                if (index === currentQuestion.correctAnswerIndex && !isCorrect) {
+                    // Si la respuesta seleccionada es incorrecta, también resaltar la correcta
+                    button.classList.add('correct');
+                }
+            });
+
+            showExplanationModal(isCorrect, currentQuestion, selectedIndex);
+        }
+
+        // Muestra el modal de explicación
+        function showExplanationModal(isCorrect, questionData, selectedIndex) {
+            if (isCorrect) {
+                modalTitle.textContent = "¡Respuesta Correcta!";
+                modalExplanation.textContent = questionData.explanationCorrect;
+            } else {
+                modalTitle.textContent = "¡Respuesta Incorrecta!";
+                modalExplanation.textContent = questionData.explanationIncorrect;
+                // Opcional: añadir la respuesta correcta al mensaje de incorrecto
+                modalExplanation.textContent += ` La respuesta correcta era: "${questionData.options[questionData.correctAnswerIndex]}".`;
+            }
+            explanationModalOverlay.classList.add('show');
+        }
+
+        // Oculta el modal de explicación y avanza el juego
+        function hideExplanationModal() {
+            explanationModalOverlay.classList.remove('show');
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            const isCorrect = (Array.from(answerOptions.children).find(button => button.classList.contains('correct'))?.onclick === null); // Check if correct button was clicked
+
+            if (isCorrect) {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < shuffledQuestions.length) {
+                    displayQuestion();
+                } else {
+                    endGame(true); // Todas las preguntas respondidas correctamente
+                }
+            } else {
+                endGame(false); // Respuesta incorrecta
+            }
+        }
+
+        // Termina el juego
+        function endGame(wonAll) {
+            gameStarted = false;
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+
+            let finalPrize = "$0";
+            if (wonAll) {
+                finalMessage.textContent = "¡Felicidades! ¡Has respondido todas las preguntas!";
+                finalPrize = moneyLevels[moneyLevels.length - 1].amount; // El millón
+            } else {
+                // Si el jugador falló, encuentra el último nivel seguro alcanzado
+                let lastSafeLevelIndex = -1;
+                for (let i = currentQuestionIndex - 1; i >= 0; i--) {
+                    if (moneyLevels[i] && moneyLevels[i].safe) {
+                        lastSafeLevelIndex = i;
+                        break;
+                    }
+                }
+                if (lastSafeLevelIndex !== -1) {
+                    finalPrize = moneyLevels[lastSafeLevelIndex].amount;
+                    finalMessage.textContent = "¡Oh no! Has fallado. Pero te llevas el premio de seguridad.";
+                } else {
+                    finalMessage.textContent = "¡Oh no! Has fallado. ¡Mejor suerte la próxima vez!";
+                }
+            }
+            finalScore.textContent = finalPrize;
+        }
+
+        // Inicia el juego
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            endScreen.classList.add('hidden');
+            currentQuestionIndex = 0;
+            gameStarted = true;
+            shuffledQuestions = shuffleArray([...questions]); // Copiar y barajar las preguntas
+            displayQuestion();
+        }
+
+        // Event Listeners
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        modalCloseButton.addEventListener('click', hideExplanationModal);
+        modalNextButton.addEventListener('click', hideExplanationModal);
+
+        // Inicializar el árbol de dinero al cargar la página
+        document.addEventListener('DOMContentLoaded', renderMoneyTree);
+    </script>
+</body>
+</html>
